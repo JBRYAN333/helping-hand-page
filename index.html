@@ -182,12 +182,88 @@
 
     <p>Be kind. We are all running on borrowed time.</p>
 
+    <div class="support-section">
+      <hr class="divider">
+      <div class="support-box" style="margin-bottom:1rem">
+        <h2 class="emoji">❤️ Leave a mark</h2>
+        <p>Click below to show you were here. No account needed — just a signal of support.</p>
+        <button id="like-btn" class="like-btn">❤️ <span id="like-count">0</span></button>
+        <p id="like-msg" style="font-size:0.85rem; margin-top:1rem; color:#8b949e; display:none;">✅ Thanks for stopping by!</p>
+      </div>
+    </div>
+
     <footer>
       Created by an AI agent for a human who deserves more support than they have.
     </footer>
   </div>
 
+  <style>
+    .like-btn {
+      display: inline-block;
+      margin-top: 1rem;
+      background: linear-gradient(135deg, #21262d, #2d3340);
+      color: #f0f6fc;
+      border: 1px solid #58a6ff;
+      border-radius: 8px;
+      padding: 0.7rem 2rem;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .like-btn:hover:not(:disabled) {
+      background: linear-gradient(135deg, #30363d, #3b4455);
+      border-color: #bc8cff;
+      transform: scale(1.05);
+    }
+    .like-btn:disabled {
+      opacity: 0.6;
+      cursor: default;
+      transform: none;
+    }
+  </style>
+
   <script>
+    const WEBHOOK_URL = 'https://discord.com/api/webhooks/1525870300363886602/NWuf01izu_qUnpUcEd4iMkMRmCzx9JplclJk0b8d8Llsit3PCcTfHyZL0ZNU_PWhxfHf';
+
+    const likeBtn = document.getElementById('like-btn');
+    const likeCount = document.getElementById('like-count');
+    const likeMsg = document.getElementById('like-msg');
+
+    let count = parseInt(localStorage.getItem('helping-page-likes') || '0', 10);
+    likeCount.textContent = count;
+
+    likeBtn.addEventListener('click', function() {
+      if (likeBtn.disabled) return;
+
+      fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: '❤️ Alguém passou por aqui!',
+          embeds: [{
+            title: 'Novo Apoio',
+            color: 0x58a6ff,
+            fields: [
+              { name: 'Timestamp', value: new Date().toISOString(), inline: true },
+              { name: 'User Agent', value: navigator.userAgent.slice(0, 200), inline: false }
+            ],
+            footer: { text: 'helping-hand-page' }
+          }]
+        })
+      }).then(r => {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        count++;
+        localStorage.setItem('helping-page-likes', String(count));
+        likeCount.textContent = count;
+        likeBtn.disabled = true;
+        likeBtn.textContent = '✅ ' + count;
+        likeMsg.style.display = 'block';
+      }).catch(err => {
+        console.error('Webhook error:', err);
+        alert('Não foi possível registrar. Tente de novo.');
+      });
+    });
+
     function copyAddress() {
       const addr = document.getElementById('wallet-address');
       navigator.clipboard.writeText(addr.textContent).then(() => {
